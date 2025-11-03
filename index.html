@@ -1,52 +1,65 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Kymenlaakso Map</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel to Map</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <style>
-body { margin:0; font-family: Arial; }
-#map { height:100vh; width:100vw; }
+  body { margin: 0; font-family: sans-serif; }
+  #map { height: 100vh; width: 100%; }
+  #fileInput { position: absolute; top: 10px; left: 10px; z-index: 1000; background: white; padding: 5px; border-radius: 8px; }
 </style>
 </head>
 <body>
+<input type="file" id="fileInput" accept=".xlsx,.xls"/>
 <div id="map"></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-const map = L.map('map').setView([60.6, 26.95], 9);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+  // ساخت نقشه
+  const map = L.map('map').setView([60.5, 26.9], 8);
 
-const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdkAwoozQfClQpCXC0KUddjEhv2JUWp-swclMiG_iyDTM7dx-OXttZfmxWoLqw0eVfcFJ9SqiGAl04/pub?output=csv';
+  // اضافه کردن نقشه پایه (OpenStreetMap)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
 
-fetch(csvUrl)
-  .then(r => r.text())
-  .then(text => {
-    text = text.replace(/^\uFEFF/, ''); // حذف BOM
-    const delimiter = text.includes(';') ? ';' : ','; // تشخیص جداکننده
-    const [headerLine, ...lines] = text.trim().split('\n');
-    const headers = headerLine.split(delimiter).map(h => h.trim());
-    const data = lines.map(l => {
-      const values = l.split(delimiter).map(v => v.trim());
-      return Object.fromEntries(values.map((v, i) => [headers[i], v]));
-    });
+  // خواندن فایل اکسل
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    const latlngs = [];
-    data.forEach(c => {
-      const lat = parseFloat(c.lat);
-      const lon = parseFloat(c.lon);
-      if (isNaN(lat) || isNaN(lon)) return;
-      const popup = `<b>${c.name}</b><br><b>Sector:</b> ${c.sector}<br>${c.description}`;
-      L.marker([lat, lon]).addTo(map).bindPopup(popup);
-      latlngs.push([lat, lon]);
-    });
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
 
-    console.log("Data loaded:", data);
-    if (latlngs.length) map.fitBounds(L.latLngBounds(latlngs).pad(0.2));
-    else console.warn("⚠ No valid coordinates found!");
-  })
-  .catch(err => console.error("Fetch error:", err));
+      // هدرهای مشخص برای ستون‌ها
+      const jsonData = XLSX.utils.sheet_to_json(sheet, { header: ["name", "sector", "description", "lat", "lon"], range: 1 });
+
+      console.log(jsonData); // برای بررسی خروجی در Console
+
+      // اضافه کردن مارکرها به نقشه
+      jsonData.forEach(row => {
+        const lat = parseFloat(row.lat);
+        const lon = parseFloat(row.lon);
+
+        if (!isNaN(lat) && !isNaN(lon)) {
+          const popupContent = `
+            <b>${row.name}</b><br>
+            <i>${row.sector}</i><br>
+            <p>${row.description}</p>
+          `;
+          L.marker([lat, lon]).addTo(map).bindPopup(popupContent);
+        }
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  });
 </script>
 </body>
 </html>
