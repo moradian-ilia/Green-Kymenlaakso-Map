@@ -1,45 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
     <title>Green Kymenlaakso Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
-        body { margin: 0; font-family: Arial, sans-serif; }
+        body { margin: 0; font-family: Arial, sans-serif; direction: rtl; }
         #map { height: 100vh; width: 100vw; }
+        .top-bar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            font-size: 14px;
+        }
+        .popup-title { font-weight: bold; margin-bottom: 6px; }
+        .sector { font-style: italic; color: #333; margin-bottom: 6px; }
     </style>
 </head>
 <body>
 
 <div id="map"></div>
+<div class="top-bar">نقشه شرکت‌های Kymenlaakso</div>
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-// 1. Create the map
-var map = L.map('map').setView([60.467, 26.945], 10);
+// create map (initial center will be adjusted to markers)
+var map = L.map('map').setView([60.6, 26.95], 10);
 
-// 2. Add OpenStreetMap background
+// add OSM tiles
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// 3. Load companies from external JSON
-fetch("data.json")
-  .then(response => response.json())
-  .then(companies => {
-      companies.forEach(c => {
-          let marker = L.marker([c.lat, c.lon]).addTo(map);
-          let popupContent = `<b>${c.name}</b><br>Sector: ${c.sector || 'N/A'}<br>${c.city || ''}`;
-          marker.bindPopup(popupContent);
+// helper: create an array of LatLngs to fit bounds later
+var latlngs = [];
+
+// load data.json
+fetch('data.json')
+  .then(function(resp){ return resp.json(); })
+  .then(function(companies){
+      companies.forEach(function(c){
+          // create marker
+          var marker = L.marker([c.lat, c.lon]).addTo(map);
+
+          // popup content (HTML)
+          var popup = document.createElement('div');
+          var title = document.createElement('div'); title.className = 'popup-title'; title.innerText = c.name;
+          var sector = document.createElement('div'); sector.className = 'sector'; sector.innerText = 'Sector: ' + (c.sector || 'N/A');
+          var desc = document.createElement('div'); desc.innerText = c.description || '';
+
+          popup.appendChild(title);
+          popup.appendChild(sector);
+          popup.appendChild(desc);
+
+          marker.bindPopup(popup);
+
+          // collect latlng for fit bounds
+          latlngs.push([c.lat, c.lon]);
       });
+
+      // if we have markers, fit map to show them all with padding
+      if(latlngs.length > 0){
+          var bounds = L.latLngBounds(latlngs);
+          map.fitBounds(bounds.pad(0.15));
+      }
   })
-  .catch(error => console.error("Error loading data.json:", error));
+  .catch(function(err){
+      console.error('Failed to load data.json:', err);
+      alert('خطا در بارگزاری data.json — مطمئن شو فایل در ریشه repo آپلود شده است.');
+  });
 </script>
 
 </body>
