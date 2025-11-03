@@ -1,87 +1,41 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-    <meta charset="utf-8" />
-    <title>Green Kymenlaakso Map</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-    <style>
-        body { margin: 0; font-family: Arial, sans-serif; direction: rtl; }
-        #map { height: 100vh; width: 100vw; }
-        .top-bar {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            background: rgba(255,255,255,0.9);
-            padding: 8px 12px;
-            border-radius: 6px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-            font-size: 14px;
-        }
-        .popup-title { font-weight: bold; margin-bottom: 6px; }
-        .sector { font-style: italic; color: #333; margin-bottom: 6px; }
-    </style>
+<meta charset="UTF-8">
+<title>Green Kymenlaakso Map</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+body { margin:0; font-family: Arial, sans-serif; }
+#map { height:100vh; width:100vw; }
+</style>
 </head>
 <body>
-
 <div id="map"></div>
-<div class="top-bar">Green Kymenlaakso Map</div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js"></script>
 
 <script>
-// create map (initial center will be adjusted to markers)
 var map = L.map('map').setView([60.6, 26.95], 10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
 
-// add OSM tiles
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+var publicSpreadsheetUrl = 'YOUR_GOOGLE_SHEET_PUBLINK_HERE';
 
-// helper: create an array of LatLngs to fit bounds later
-var latlngs = [];
-
-// load data.json
-fetch('data.json')
-  .then(function(resp){ return resp.json(); })
-  .then(function(companies){
-      companies.forEach(function(c){
-          // create marker
+Tabletop.init({
+  key: publicSpreadsheetUrl,
+  simpleSheet: true,
+  callback: function(data, tabletop) {
+      var latlngs = [];
+      data.forEach(function(c){
           var marker = L.marker([c.lat, c.lon]).addTo(map);
-
-          // popup content (HTML)
-          var popup = document.createElement('div');
-          var title = document.createElement('div'); title.className = 'popup-title'; title.innerText = c.name;
-          var sector = document.createElement('div'); sector.className = 'sector'; sector.innerText = 'Sector: ' + (c.sector || 'N/A');
-          var desc = document.createElement('div'); desc.innerText = c.description || '';
-
-          popup.appendChild(title);
-          popup.appendChild(sector);
-          popup.appendChild(desc);
-
+          var popup = `<b>${c.name}</b><br>Sector: ${c.sector}<br>${c.description}`;
           marker.bindPopup(popup);
-
-          // collect latlng for fit bounds
           latlngs.push([c.lat, c.lon]);
       });
-
-      // if we have markers, fit map to show them all with padding
-      if(latlngs.length > 0){
-          var bounds = L.latLngBounds(latlngs);
-          map.fitBounds(bounds.pad(0.15));
-      }
-  })
-  .catch(function(err){
-      console.error('Failed to load data.json:', err);
-      alert('خطا در بارگزاری data.json — مطمئن شو فایل در ریشه repo آپلود شده است.');
-  });
+      if(latlngs.length>0) map.fitBounds(L.latLngBounds(latlngs).pad(0.15));
+  }
+});
 </script>
-
 </body>
 </html>
