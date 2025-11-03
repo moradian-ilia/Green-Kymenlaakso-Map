@@ -14,38 +14,35 @@ body { margin:0; font-family: Arial, sans-serif; }
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js"></script>
 
 <script>
 var map = L.map('map').setView([60.6, 26.95], 9);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
+  maxZoom: 19
 }).addTo(map);
 
-var publicSpreadsheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdkAwoozQfClQpCXC0KUddjEhv2JUWp-swclMiG_iyDTM7dx-OXttZfmxWoLqw0eVfcFJ9SqiGAl04/pub?output=csv';
+var csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdkAwoozQfClQpCXC0KUddjEhv2JUWp-swclMiG_iyDTM7dx-OXttZfmxWoLqw0eVfcFJ9SqiGAl04/pub?output=csv';
 
-Tabletop.init({
-  key: publicSpreadsheetUrl,
-  simpleSheet: true,
-  callback: function(data) {
-    var latlngs = [];
-    data.forEach(function(c) {
-      if (c.lat && c.lon) {
-        var lat = parseFloat(c.lat);
-        var lon = parseFloat(c.lon);
-        if (!isNaN(lat) && !isNaN(lon)) {
-          var marker = L.marker([lat, lon]).addTo(map);
-          var popup = `<b>${c.name}</b><br><b>Sector:</b> ${c.sector}<br>${c.description}`;
-          marker.bindPopup(popup);
-          latlngs.push([lat, lon]);
-        }
-      }
+fetch(csvUrl)
+  .then(response => response.text())
+  .then(csv => {
+    const rows = csv.trim().split('\n').map(r => r.split(','));
+    const headers = rows[0].map(h => h.trim());
+    const data = rows.slice(1).map(r => Object.fromEntries(r.map((v,i) => [headers[i], v.trim()])));
+    
+    const latlngs = [];
+    data.forEach(c => {
+      const lat = parseFloat(c.lat);
+      const lon = parseFloat(c.lon);
+      if (isNaN(lat) || isNaN(lon)) return;
+      const marker = L.marker([lat, lon]).addTo(map);
+      const popup = `<b>${c.name}</b><br><b>Sector:</b> ${c.sector}<br>${c.description}`;
+      marker.bindPopup(popup);
+      latlngs.push([lat, lon]);
     });
-    if (latlngs.length > 0) {
-      map.fitBounds(L.latLngBounds(latlngs).pad(0.15));
-    }
-  }
-});
+    if (latlngs.length > 0) map.fitBounds(L.latLngBounds(latlngs).pad(0.15));
+  })
+  .catch(err => console.error('Error loading CSV:', err));
 </script>
 </body>
 </html>
