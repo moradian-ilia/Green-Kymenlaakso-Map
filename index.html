@@ -29,9 +29,9 @@ Tabletop.init({
       var latlngs = [];
       data.forEach(function(c){
           var marker = L.marker([c.lat, c.lon]).addTo(map);
-          var popup = `<b>${c.name}</b><br>Sector: ${c.sector}<br>${c.description}`;
+          var popup = `<b>${c.A}</b><br>Sector: ${c.B}<br>${c.C}`;
           marker.bindPopup(popup);
-          latlngs.push([c.lat, c.lon]);
+          latlngs.push([c.D, c.E]);
       });
       if(latlngs.length>0) map.fitBounds(L.latLngBounds(latlngs).pad(0.15));
   }
