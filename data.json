@@ -2,5 +2,5 @@
   { "name": "Company A", "lat": 60.466, "lon": 26.945 },
   { "name": "Company B", "lat": 60.481, "lon": 26.920 },
   { "name": "Company C", "lat": 60.452, "lon": 26.860 },
-  { "name": "Company D", "lat": 60.885578, "lon": 26.705985 }
+  { "name": "Company D", "lat": 60.885, "lon": 26.705 }
 ]
