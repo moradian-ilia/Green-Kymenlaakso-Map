@@ -1,39 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title>Company Map - Kymenlaakso</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Kymenlaakso Map</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
     <style>
-        #map { height: 100vh; }
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #map { height: 100vh; width: 100vw; }
     </style>
 </head>
 <body>
 
 <div id="map"></div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    var map = L.map('map').setView([60.47, 26.90], 9);
+// 1. Create the map
+var map = L.map('map').setView([60.467, 26.945], 10);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
-    }).addTo(map);
+// 2. Add OpenStreetMap background
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+}).addTo(map);
 
-    var companies = [
-        {name: "Company A", lat: 60.466, lon: 26.945},
-        {name: "Company B", lat: 60.481, lon: 26.920},
-        {name: "Company C", lat: 60.452, lon: 26.860}
-    ];
-
-    companies.forEach(function(c) {
-        L.marker([c.lat, c.lon])
-            .addTo(map)
-            .bindPopup("<b>" + c.name + "</b>");
-    });
+// 3. Load companies from external JSON
+fetch("data.json")
+  .then(response => response.json())
+  .then(companies => {
+      companies.forEach(c => {
+          let marker = L.marker([c.lat, c.lon]).addTo(map);
+          let popupContent = `<b>${c.name}</b><br>Sector: ${c.sector || 'N/A'}<br>${c.city || ''}`;
+          marker.bindPopup(popupContent);
+      });
+  })
+  .catch(error => console.error("Error loading data.json:", error));
 </script>
 
 </body>
