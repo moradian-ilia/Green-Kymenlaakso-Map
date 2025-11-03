@@ -2,47 +2,51 @@
 <html lang="fa">
 <head>
 <meta charset="UTF-8">
-<title>Green Kymenlaakso Map</title>
+<title>Kymenlaakso Map</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-body { margin:0; font-family: Arial, sans-serif; }
+body { margin:0; font-family: Arial; }
 #map { height:100vh; width:100vw; }
 </style>
 </head>
 <body>
 <div id="map"></div>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-var map = L.map('map').setView([60.6, 26.95], 9);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19
-}).addTo(map);
+const map = L.map('map').setView([60.6, 26.95], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-var csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdkAwoozQfClQpCXC0KUddjEhv2JUWp-swclMiG_iyDTM7dx-OXttZfmxWoLqw0eVfcFJ9SqiGAl04/pub?output=csv';
+const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdkAwoozQfClQpCXC0KUddjEhv2JUWp-swclMiG_iyDTM7dx-OXttZfmxWoLqw0eVfcFJ9SqiGAl04/pub?output=csv';
 
 fetch(csvUrl)
-  .then(response => response.text())
-  .then(csv => {
-    const rows = csv.trim().split('\n').map(r => r.split(','));
-    const headers = rows[0].map(h => h.trim());
-    const data = rows.slice(1).map(r => Object.fromEntries(r.map((v,i) => [headers[i], v.trim()])));
-    
+  .then(r => r.text())
+  .then(text => {
+    text = text.replace(/^\uFEFF/, ''); // حذف BOM
+    const delimiter = text.includes(';') ? ';' : ','; // تشخیص جداکننده
+    const [headerLine, ...lines] = text.trim().split('\n');
+    const headers = headerLine.split(delimiter).map(h => h.trim());
+    const data = lines.map(l => {
+      const values = l.split(delimiter).map(v => v.trim());
+      return Object.fromEntries(values.map((v, i) => [headers[i], v]));
+    });
+
     const latlngs = [];
     data.forEach(c => {
       const lat = parseFloat(c.lat);
       const lon = parseFloat(c.lon);
       if (isNaN(lat) || isNaN(lon)) return;
-      const marker = L.marker([lat, lon]).addTo(map);
       const popup = `<b>${c.name}</b><br><b>Sector:</b> ${c.sector}<br>${c.description}`;
-      marker.bindPopup(popup);
+      L.marker([lat, lon]).addTo(map).bindPopup(popup);
       latlngs.push([lat, lon]);
     });
-    if (latlngs.length > 0) map.fitBounds(L.latLngBounds(latlngs).pad(0.15));
+
+    console.log("Data loaded:", data);
+    if (latlngs.length) map.fitBounds(L.latLngBounds(latlngs).pad(0.2));
+    else console.warn("⚠ No valid coordinates found!");
   })
-  .catch(err => console.error('Error loading CSV:', err));
+  .catch(err => console.error("Fetch error:", err));
 </script>
 </body>
 </html>
