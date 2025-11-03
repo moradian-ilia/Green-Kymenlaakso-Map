@@ -17,23 +17,33 @@ body { margin:0; font-family: Arial, sans-serif; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js"></script>
 
 <script>
-var map = L.map('map').setView([60.6, 26.95], 10);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19}).addTo(map);
+var map = L.map('map').setView([60.6, 26.95], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+}).addTo(map);
 
 var publicSpreadsheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdkAwoozQfClQpCXC0KUddjEhv2JUWp-swclMiG_iyDTM7dx-OXttZfmxWoLqw0eVfcFJ9SqiGAl04/pub?output=csv';
 
 Tabletop.init({
   key: publicSpreadsheetUrl,
   simpleSheet: true,
-  callback: function(data, tabletop) {
-      var latlngs = [];
-      data.forEach(function(c){
-          var marker = L.marker([c.lat, c.lon]).addTo(map);
-          var popup = `<b>${c.A}</b><br>Sector: ${c.B}<br>${c.C}`;
+  callback: function(data) {
+    var latlngs = [];
+    data.forEach(function(c) {
+      if (c.lat && c.lon) {
+        var lat = parseFloat(c.lat);
+        var lon = parseFloat(c.lon);
+        if (!isNaN(lat) && !isNaN(lon)) {
+          var marker = L.marker([lat, lon]).addTo(map);
+          var popup = `<b>${c.name}</b><br><b>Sector:</b> ${c.sector}<br>${c.description}`;
           marker.bindPopup(popup);
-          latlngs.push([c.D, c.E]);
-      });
-      if(latlngs.length>0) map.fitBounds(L.latLngBounds(latlngs).pad(0.15));
+          latlngs.push([lat, lon]);
+        }
+      }
+    });
+    if (latlngs.length > 0) {
+      map.fitBounds(L.latLngBounds(latlngs).pad(0.15));
+    }
   }
 });
 </script>
