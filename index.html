@@ -44,8 +44,9 @@ fetch(csvUrl)
 
       const popup = `
         <b>${c.name || 'Unknown'}</b><br>
-        <b>Sector:</b> ${c.sector || '—'}<br>
-        ${c.description || ''}
+        <b>Industry Sector:</b> ${c.sector || '—'}<br>
+        <b>Company size:</b> ${c.size || '—'}<br>
+        <b>Green and clean initiatives implemented:</b> ${c.description || ''}
       `;
       L.marker([lat, lon]).addTo(map).bindPopup(popup);
       latlngs.push([lat, lon]);
