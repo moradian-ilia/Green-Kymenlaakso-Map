@@ -48,7 +48,7 @@ fetch(csvUrl)
         <b>${c.name || 'Unknown'}</b><br>
         <b>Industry Sector:</b> ${c.sector || '—'}<br>
         <b>Company size:</b> ${c.size || '—'}<br>
-        <b>Green and clean initiatives implemented:</b> ${c.description || ''}
+        <b>Green and clean initiatives implemented:</b> ${c.actions || ''}
       `;
       L.marker([lat, lon]).addTo(map).bindPopup(popup);
       latlngs.push([lat, lon]);
