@@ -22,21 +22,35 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 
 
 const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdkAwoozQfClQpCXC0KUddjEhv2JUWp-swclMiG_iyDTM7dx-OXttZfmxWoLqw0eVfcFJ9SqiGAl04/pub?output=csv';
 
+//fetch(csvUrl)
+  //.then(r => r.text())
+  //.then(text => {
+  //  text = text.replace(/^\uFEFF/, ''); // del BOM
+    //const delimiter = text.includes(';') ? ';' : ',';
+    //const lines = text.trim().split(/\r?\n/).filter(Boolean);
+
+    //const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase());
+    //const data = lines.slice(1).map(line => {
+     // const regex = new RegExp(`${delimiter}(?=(?:[^"]*"[^"]*")*[^"]*$)`);
+      //const values = line.split(regex).map(v => v.replace(/^"|"$/g, '').trim());
+      //return Object.fromEntries(headers.map((h, i) => [h, values[i] || '']));
+    //});
+
 fetch(csvUrl)
   .then(r => r.text())
   .then(text => {
-    text = text.replace(/^\uFEFF/, ''); // del BOM
-    const delimiter = text.includes(';');
-    //const delimiter = text.includes(';') ? ';' : ',';
+    text = text.replace(/^\uFEFF/, ''); // حذف BOM
+    const delimiter = text.includes(';') ? ';' : ','; // اصلاح
     const lines = text.trim().split(/\r?\n/).filter(Boolean);
 
     const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase());
     const data = lines.slice(1).map(line => {
+      // regex برای درست جدا کردن مقادیر داخل کوتیشن
       const regex = new RegExp(`${delimiter}(?=(?:[^"]*"[^"]*")*[^"]*$)`);
       const values = line.split(regex).map(v => v.replace(/^"|"$/g, '').trim());
       return Object.fromEntries(headers.map((h, i) => [h, values[i] || '']));
     });
-
+  
     console.log("✅ Parsed data:", data);
 
     const latlngs = [];
