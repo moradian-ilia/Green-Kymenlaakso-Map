@@ -61,6 +61,7 @@ fetch(csvUrl)
 
       const popup = `
         <b>${c.company_name || 'Unknown'}</b><br>
+        <b>City:</b> ${c.city || '—'}<br>
         <b>Industry Sector:</b> ${c.industry_sector || '—'}<br>
         <b>Company size:</b> ${c.company_size || '—'}<br>
         <b>Green and clean initiatives implemented:</b> ${c.current_actions || ''}
