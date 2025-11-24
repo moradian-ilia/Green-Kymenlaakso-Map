@@ -26,7 +26,8 @@ fetch(csvUrl)
   .then(r => r.text())
   .then(text => {
     text = text.replace(/^\uFEFF/, ''); // del BOM
-    const delimiter = text.includes(';') ? ';' : ',';
+    const delimiter = text.includes(';');
+    //const delimiter = text.includes(';') ? ';' : ',';
     const lines = text.trim().split(/\r?\n/).filter(Boolean);
 
     const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase());
