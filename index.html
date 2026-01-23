@@ -39,13 +39,13 @@ const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdkAwoozQfClQpC
 fetch(csvUrl)
   .then(r => r.text())
   .then(text => {
-    text = text.replace(/^\uFEFF/, ''); // حذف BOM
-    const delimiter = text.includes(';') ? ';' : ','; // اصلاح
+    text = text.replace(/^\uFEFF/, ''); //  BOM
+    const delimiter = text.includes(';') ? ';' : ','; // 
     const lines = text.trim().split(/\r?\n/).filter(Boolean);
 
     const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase());
     const data = lines.slice(1).map(line => {
-      // regex برای درست جدا کردن مقادیر داخل کوتیشن
+      // regex 
       const regex = new RegExp(`${delimiter}(?=(?:[^"]*"[^"]*")*[^"]*$)`);
       const values = line.split(regex).map(v => v.replace(/^"|"$/g, '').trim());
       return Object.fromEntries(headers.map((h, i) => [h, values[i] || '']));
